@@ -1,6 +1,15 @@
 [package]
-name = "word-ladder"
+name = "word-ladder-generator"
 version = "0.1.0"
 edition = "2021"
+authors = ["cqb13 <cqb13.dev@gmail.com>"]
+license = "MIT"
+description = "A CLI tool that generates word ladders given a start and end word."
+readme = "README.md"
+homepage = "https://github.com/Talon-Games/word-ladder-generator"
+repository = "https://github.com/Talon-Games/word-ladder-generator"
+keywords = ["cli", "tools", "utilities"]
+categories = ["command-line-utilities"]
 
 [dependencies]
+crossterm = "0.27.0"
