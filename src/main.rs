@@ -3,18 +3,6 @@ pub mod display;
 use display::string_input::StringInput;
 use std::collections::{HashSet, VecDeque};
 
-#[derive(Eq, PartialEq, Hash, Clone)]
-pub struct Word {
-    pub word: String,
-    pub definition: String,
-}
-
-impl Word {
-    pub fn new(word: String, definition: String) -> Word {
-        Word { word, definition }
-    }
-}
-
 fn main() {
     let starting_word = StringInput::new()
         .message("Enter starting word")
@@ -28,47 +16,45 @@ fn main() {
         .max(starting_word.len() as i32)
         .ask();
 
-    println!("start: {}", starting_word);
-    println!("end: {}", ending_word);
-
-    let file = include_str!("./words.txt");
-    let mut word_list: Vec<Word> = Vec::new();
-
-    let mut start: Option<Word> = None;
-    let mut end: Option<Word> = None;
-    for line in file.lines() {
-        let split: Vec<&str> = line.split(" :: ").collect();
-        if starting_word == split[0] {
-            start = Some(Word::new(
-                split[0].trim().to_string(),
-                split[1].trim().to_string(),
-            ));
-        }
-
-        if ending_word == split[0] {
-            end = Some(Word::new(
-                split[0].trim().to_string(),
-                split[1].trim().to_string(),
-            ));
-        }
-
-        word_list.push(Word::new(
-            split[0].trim().to_string(),
-            split[1].trim().to_string(),
-        ));
+    if starting_word == ending_word {
+        eprintln!("The starting word must be different from the ending word");
+        std::process::exit(1);
     }
 
-    if start.is_none() {
+    println!("{} -> {}", starting_word, ending_word);
+
+    let file = include_str!("./words.txt");
+    let mut word_list: Vec<String> = Vec::new();
+
+    let mut has_start = false;
+    let mut has_end = false;
+    for line in file.lines() {
+        if line.len() != starting_word.len() {
+            continue;
+        }
+
+        if line == starting_word {
+            has_start = true;
+        }
+
+        if line == ending_word {
+            has_end = true;
+        }
+
+        word_list.push(line.to_string());
+    }
+
+    if has_start == false {
         eprintln!("Failed to find start word in word list");
         std::process::exit(1);
     }
 
-    if end.is_none() {
+    if has_end == false {
         eprintln!("Failed to find end word in word list");
         std::process::exit(1);
     }
 
-    let ladder = generate_word_ladder(start.unwrap(), end.unwrap(), word_list);
+    let ladder = generate_word_ladder(starting_word, ending_word, word_list);
 
     if ladder.is_empty() {
         println!("Failed to find path between words");
@@ -76,52 +62,54 @@ fn main() {
     }
 
     for word in ladder {
-        println!("{}             {}", word.word, word.definition);
+        println!("{}", word);
     }
 }
 
-fn generate_word_ladder(start_word: Word, end_word: Word, word_list: Vec<Word>) -> Vec<Word> {
-    let mut queue: VecDeque<Vec<Word>> = VecDeque::new();
-    let mut visited: HashSet<Word> = HashSet::new();
+fn find_successors(word: &str, word_set: &HashSet<String>) -> Vec<String> {
+    let mut successors = Vec::new();
+    let word_chars: Vec<char> = word.chars().collect();
 
-    queue.push_back(vec![start_word.clone()]);
-    visited.insert(start_word);
+    for i in 0..word_chars.len() {
+        for ch in 'a'..='z' {
+            if ch != word_chars[i] {
+                let mut new_word = word_chars.clone();
+                new_word[i] = ch;
+                let candidate: String = new_word.into_iter().collect();
 
-    while let Some(path) = queue.pop_front() {
-        let current_word = path.last().unwrap();
+                if word_set.contains(&candidate) {
+                    successors.push(candidate);
+                }
+            }
+        }
+    }
+    successors
+}
 
-        if current_word.word == end_word.word {
-            return path;
+fn generate_word_ladder(start: String, end: String, word_list: Vec<String>) -> Vec<String> {
+    let word_set: HashSet<String> = word_list.iter().cloned().collect();
+    let mut queue = VecDeque::new();
+    let mut visited = HashSet::new();
+
+    queue.push_back(vec![start.clone()]);
+    visited.insert(start.clone());
+
+    while let Some(ladder) = queue.pop_front() {
+        let last_word = ladder.last().unwrap();
+
+        if last_word == &end {
+            return ladder;
         }
 
-        for word in &word_list {
-            if differs_by_one_letter(current_word, &word) && !visited.contains(&word) {
-                visited.insert(word.clone());
-                let mut new_path = path.clone();
-                new_path.push(word.clone());
-                queue.push_back(new_path);
+        for successor in find_successors(last_word, &word_set) {
+            if !visited.contains(&successor) {
+                let mut new_ladder = ladder.clone();
+                new_ladder.push(successor.clone());
+                queue.push_back(new_ladder);
+                visited.insert(successor);
             }
         }
     }
 
-    Vec::new()
-}
-
-fn differs_by_one_letter(word1: &Word, word2: &Word) -> bool {
-    if word1.word.len() != word2.word.len() {
-        return false;
-    }
-
-    let mut diff_count = 0;
-
-    for (c1, c2) in word1.word.chars().zip(word2.word.chars()) {
-        if c1 != c2 {
-            diff_count += 1;
-            if diff_count > 1 {
-                return false;
-            }
-        }
-    }
-
-    diff_count == 1
+    Vec::new() // Return an empty vector if no ladder is found
 }
