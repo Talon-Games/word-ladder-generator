@@ -21,6 +21,10 @@ fn main() {
         std::process::exit(1);
     }
 
+    let skip_word = StringInput::new().message("Enter words to skip").ask();
+
+    let words_to_skip: Vec<&str> = skip_word.split(",").collect();
+
     println!("{} -> {}", starting_word, ending_word);
 
     let file = include_str!("./words.txt");
@@ -30,6 +34,10 @@ fn main() {
     let mut has_end = false;
     for line in file.lines() {
         if line.len() != starting_word.len() {
+            continue;
+        }
+
+        if words_to_skip.contains(&line) {
             continue;
         }
 
@@ -111,5 +119,5 @@ fn generate_word_ladder(start: String, end: String, word_list: Vec<String>) -> V
         }
     }
 
-    Vec::new() // Return an empty vector if no ladder is found
+    Vec::new()
 }

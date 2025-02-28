@@ -49,17 +49,19 @@ impl StringInput {
     pub fn ask(&self) -> String {
         println!("{}: ", self.message);
 
-        if self.max.is_none() {
-            println!("String must be at least {} chars", self.min);
-        } else {
-            if self.min == self.max.unwrap() {
-                println!("String must be {} chars", self.min,);
+        if self.min != 0 || self.max.is_some() {
+            if self.max.is_none() {
+                println!("String must be at least {} chars", self.min);
             } else {
-                println!(
-                    "String must be between {} and {} chars",
-                    self.min,
-                    self.max.unwrap()
-                );
+                if self.min == self.max.unwrap() {
+                    println!("String must be {} chars", self.min,);
+                } else {
+                    println!(
+                        "String must be between {} and {} chars",
+                        self.min,
+                        self.max.unwrap()
+                    );
+                }
             }
         }
 
