@@ -79,7 +79,7 @@ impl StringInput {
                     ..
                 }) => match code {
                     KeyCode::Char(c) => {
-                        if c.is_alphabetic() {
+                        if c.is_alphabetic() || c == ',' {
                             current_string.push(c);
                         }
                     }
